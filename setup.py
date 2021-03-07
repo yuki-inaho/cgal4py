@@ -65,7 +65,7 @@ ext_options = dict(
     include_dirs=include_dirs,  # [numpy.get_include()],
     libraries=[],
     extra_link_args=[],
-    extra_compile_args=["-std=gnu++11"],
+    extra_compile_args=["-std=gnu++14", "-frounding-math"],
     define_macros=[("NPY_NO_DEPRECATED_API", None)],
 )
 # CYTHON_TRACE required for coverage and line_profiler.  Remove for release.
@@ -96,17 +96,12 @@ else:
         cykdtree_parallel_cpp = os.path.join(os.path.dirname(cykdtree.__file__), "c_parallel_kdtree.cpp")
         cykdtree_parallel_hpp = os.path.join(os.path.dirname(cykdtree.__file__), "c_parallel_kdtree.hpp")
         cykdtree_utils_cpp = os.path.join(os.path.dirname(cykdtree.__file__), "c_utils.cpp")
-        # Attempt to call MPICH first, then OpenMPI
-        try:
-            mpi_compile_args = os.popen("mpic++ -compile_info").read().strip().split(" ")[1:]
-            mpi_link_args = os.popen("mpic++ -link_info").read().strip().split(" ")[1:]
-            if len(mpi_compile_args[0]) == 0:
-                raise Exception
-        except:
-            mpi_compile_args = os.popen("mpic++ --showme:compile").read().strip().split(" ")
-            mpi_link_args = os.popen("mpic++ --showme:link").read().strip().split(" ")
-            if len(mpi_compile_args[0]) == 0:
-                raise Exception
+
+        # Use OpenMPI
+        mpi_compile_args = os.popen("mpic++ --showme:compile").read().strip().split(" ")
+        mpi_link_args = os.popen("mpic++ --showme:link").read().strip().split(" ")
+        if len(mpi_compile_args[0]) == 0:
+            raise Exception
         ext_options_mpicgal["extra_compile_args"] += mpi_compile_args
         ext_options_mpicgal["extra_link_args"] += mpi_link_args
         ext_options_mpicgal["include_dirs"].append(os.path.dirname(cykdtree.__file__))
